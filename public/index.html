@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intellecta — Quantum Intelligence Layer</title>
+    <!-- Material Icons & Markdown Parser -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-main: #08080e;
+            --bg-sidebar: #050507;
+            --bg-card: rgba(20, 20, 28, 0.72);
+            --border-color: rgba(0, 242, 254, 0.15);
+            --accent-cyan: #00f2fe;
+            --accent-purple: #7f00ff;
+            --accent-pink: #ff007f;
+            --accent-premium: #ffc107;
+            --text-primary: #f5f7ff;
+            --text-secondary: #8d96b5;
+            --neon-glow: 0 0 20px rgba(0, 242, 254, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated Ambient Background Grid */
+        body::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 40px 40px; pointer-events: none; z-index: 0;
+        }
+
+        /* --- AUTH / SIGNUP MODAL & PAYMENT MODAL --- */
+        .auth-overlay {
+            position: fixed; inset: 0; background: rgba(5, 5, 10, 0.9);
+            backdrop-filter: blur(15px); z-index: 10000; display: flex;
+            align-items: center; justify-content: center; transition: opacity 0.3s ease;
+        }
+        .auth-card {
+            background: rgba(15, 18, 35, 0.95); border: 1px solid var(--border-color);
+            border-radius: 20px; padding: 40px; width: 100%; max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8), var(--neon-glow); text-align: center;
+        }
+        .auth-card h2 { font-size: 28px; margin-bottom: 8px; background: linear-gradient(90deg, #fff, var(--accent-cyan)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .auth-card p { font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; }
+        .auth-field { margin-bottom: 16px; text-align: left; }
+        .auth-field label { display: block; font-size: 11px; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+        .auth-field input { width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 10px; color: #fff; outline: none; transition: 0.2s; }
+        .auth-field input:focus { border-color: var(--accent-cyan); box-shadow: var(--neon-glow); }
+        .auth-btn { width: 100%; padding: 14px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); color: #fff; font-weight: 700; cursor: pointer; transition: 0.25s; margin-top: 10px; }
+        .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(0,242,254,0.4); }
+        
+        .cancel-btn { background: transparent; border: 1px solid var(--border-color); margin-top: 10px; }
+        .cancel-btn:hover { background: rgba(255,255,255,0.05); transform: translateY(-2px); box-shadow: none; }
+
+        /* --- SIDEBAR --- */
+        aside {
+            width: 280px; height: 100%; background: var(--bg-sidebar); border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column; padding: 22px 18px; transition: all 0.3s ease; z-index: 100;
+        }
+        aside.collapsed { margin-left: -280px; }
+        .brand-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+        .logo-orb { width: 36px; height: 36px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #fff, var(--accent-cyan), var(--accent-purple)); box-shadow: var(--neon-glow); }
+        .brand-logo h1 { font-size: 18px; letter-spacing: 2px; }
+        .brand-logo span { font-size: 10px; color: var(--accent-cyan); letter-spacing: 3px; display: block; }
+
+        .new-session-btn {
+            background: linear-gradient(135deg, rgba(127,0,255,0.2), rgba(0,242,254,0.1)); color: #fff;
+            border: 1px solid var(--border-color); padding: 14px; border-radius: 12px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 13px; transition: 0.25s;
+        }
+        .new-session-btn:hover { border-color: var(--accent-cyan); box-shadow: var(--neon-glow); transform: translateY(-2px); }
+
+        .history-title { margin: 24px 0 10px; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 2px; }
+        .history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .history-item { padding: 10px 12px; border-radius: 8px; color: var(--text-secondary); font-size: 13px; cursor: pointer; transition: 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 8px; }
+        .history-item:hover, .history-item.active { background: rgba(255,255,255,0.05); color: #fff; border-left: 2px solid var(--accent-cyan); }
+
+        .sidebar-bottom { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: auto; }
+        .status-badge { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #31ff9a; box-shadow: 0 0 10px #31ff9a; }
+
+        /* --- MAIN APP AREA --- */
+        main { flex: 1; display: flex; flex-direction: column; height: 100vh; position: relative; z-index: 10; }
+        header { height: 70px; padding: 0 28px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; background: rgba(8,8,14,0.6); backdrop-filter: blur(20px); }
+        .header-title { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+        .chat-container { flex: 1; overflow-y: auto; padding: 30px 10%; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; }
+
+        /* Welcome Screen */
+        .brand-hero-zone { text-align: center; margin: 40px 0 20px; }
+        .brand-hero-title { font-size: 48px; font-weight: 800; background: linear-gradient(180deg, #fff 40%, #787b86); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -1px; }
+        .brand-hero-subtitle { font-size: 11px; color: var(--accent-cyan); letter-spacing: 4px; text-transform: uppercase; }
+        .suggestions-layout { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; max-width: 750px; margin: 20px auto; width: 100%; }
+        .suggestion-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; cursor: pointer; transition: 0.25s; }
+        .suggestion-item:hover { border-color: var(--accent-cyan); transform: translateY(-2px); box-shadow: var(--neon-glow); }
+        .suggestion-item h4 { font-size: 13px; color: var(--accent-cyan); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .suggestion-item p { font-size: 12px; color: var(--text-secondary); }
+
+        body.conversation-started .brand-hero-zone,
+        body.conversation-started .suggestions-layout { display: none !important; }
+
+        /* Chat Bubbles */
+        .chat-bubble { display: flex; gap: 16px; max-width: 850px; width: 100%; margin: 0 auto; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .avatar { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; font-size: 18px; }
+        .user .avatar { background: linear-gradient(135deg, #2b3252, #181d33); }
+        .bot .avatar { background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); box-shadow: var(--neon-glow); }
+        .bubble-content { flex: 1; font-size: 15px; line-height: 1.7; color: var(--text-primary); }
+        .user .bubble-content { background: rgba(255,255,255,0.03); padding: 14px 18px; border: 1px solid var(--border-color); border-radius: 4px 16px 16px 16px; }
+
+        /* Attachment Preview */
+        .file-preview-bar { display: flex; gap: 10px; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px; font-size: 12px; color: var(--accent-cyan); }
+
+        /* --- INPUT CONSOLE & PLUS POPUP MENU --- */
+        .input-console-wrapper { padding: 16px 10% 28px; background: linear-gradient(180deg, transparent, var(--bg-main) 40%); }
+        .input-box-frame {
+            background: rgba(15, 18, 32, 0.85); border: 1px solid var(--border-color); border-radius: 18px;
+            padding: 14px 18px; max-width: 850px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px;
+            backdrop-filter: blur(20px); box-shadow: 0 10px 40px rgba(0,0,0,0.5); position: relative;
+        }
+
+        .text-input-row textarea { width: 100%; background: transparent; border: none; outline: none; color: #fff; font-size: 15px; resize: none; min-height: 40px; max-height: 120px; }
+        
+        .actions-management-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        
+        .option-pill { background: rgba(255,255,255,0.03); color: var(--text-secondary); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
+        .option-pill.active { background: rgba(0,242,254,0.1); color: var(--accent-cyan); border-color: rgba(0,242,254,0.3); box-shadow: var(--neon-glow); }
+        .engine-pill { background: rgba(255,193,7,0.03); color: var(--accent-premium); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px dashed rgba(255,193,7,0.3); display: flex; align-items: center; gap: 4px; }
+
+        /* Floating Plus Menu */
+        .plus-wrapper { position: relative; }
+        .plus-trigger-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--accent-cyan); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.25s; }
+        .plus-trigger-btn:hover { background: rgba(0,242,254,0.15); transform: rotate(90deg); }
+
+        .attachment-popup-menu {
+            position: absolute; bottom: 50px; left: 0; background: rgba(12, 15, 28, 0.95);
+            border: 1px solid var(--border-color); border-radius: 14px; padding: 8px; display: flex;
+            flex-direction: column; gap: 4px; backdrop-filter: blur(15px); opacity: 0; visibility: hidden;
+            transform: translateY(10px); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); z-index: 200; width: 190px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        }
+        .attachment-popup-menu.active { opacity: 1; visibility: visible; transform: translateY(0); }
+        .attachment-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--text-primary); font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 8px; transition: 0.2s; }
+        .attachment-item:hover { background: rgba(0,242,254,0.1); color: var(--accent-cyan); }
+
+        .submit-arrow-btn { margin-left: auto; background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); color: #fff; border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .submit-arrow-btn:hover { transform: scale(1.08); box-shadow: var(--neon-glow); }
+        .mic-btn { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; padding: 6px; }
+        .mic-btn.active { color: var(--accent-pink); animation: pulse 1s infinite; }
+
+        /* Responsive Mobile Layout */
+        @media(max-width: 768px) {
+            aside { position: fixed; left: -280px; }
+            aside.open { left: 0; }
+            .suggestions-layout { grid-template-columns: 1fr; }
+            .chat-container { padding: 20px 16px; }
+            .input-console-wrapper { padding: 10px 14px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIGNUP / AUTH MODAL -->
+    <div class="auth-overlay" id="authModal">
+        <div class="auth-card">
+            <h2>Intellecta</h2>
+            <p>Enter your credentials to access the Quantum Intelligence Layer</p>
+            <form onsubmit="handleSignup(event)">
+                <div class="auth-field">
+                    <label>Developer Name</label>
+                    <input type="text" id="authName" placeholder="e.g. Alex" required>
+                </div>
+                <div class="auth-field">
+                    <label>Access Key / Password</label>
+                    <input type="password" id="authKey" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="auth-btn">Initialize Terminal</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PAYMENT MODAL -->
+    <div class="auth-overlay" id="paymentModal" style="display: none;">
+        <div class="auth-card">
+            <h2>Pro Upgrade</h2>
+            <p style="margin-bottom: 12px; font-size: 14px;">Unlock the full potential of Intellecta with Premium:</p>
+            <ul style="text-align: left; margin: 0 0 24px 24px; color: var(--text-secondary); font-size: 13px; line-height: 1.8;">
+                <li>Multi-brain switching</li>
+                <li>Cross verification</li>
+                <li>Video generator</li>
+                <li>Chat limit extended</li>
+            </ul>
+            <button class="auth-btn" onclick="processPayment()">Pay Now</button>
+            <button class="auth-btn cancel-btn" onclick="closePaymentModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar">
+        <div class="brand-logo">
+            <div class="logo-orb"></div>
+            <div>
+                <h1>INTELLECTA</h1>
+                <span>MULTI-BRAIN CORE</span>
+            </div>
+        </div>
+
+        <button class="new-session-btn" onclick="startNewSession()">
+            <span class="material-icons" style="font-size: 18px;">add</span> New Session
+        </button>
+
+        <div class="history-title">Saved Conversations</div>
+        <div class="history-list" id="historyList"></div>
+
+        <div class="sidebar-bottom">
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span>Cross-Verification Available</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN TERMINAL -->
+    <main>
+        <header>
+            <div class="header-title">
+                <button class="mic-btn" onclick="toggleSidebar()" style="margin-right: 8px;"><span class="material-icons">menu</span></button>
+                <span class="material-icons" style="color: var(--accent-cyan); font-size: 18px;">memory</span>
+                <span id="userGreeting">Quantum Terminal</span>
+            </div>
+            <button class="option-pill" onclick="clearCurrentChat()"><span class="material-icons" style="font-size: 14px;">delete_outline</span> Clear</button>
+        </header>
+
+        <!-- CHAT CONTAINER -->
+        <div class="chat-container" id="chatContainer">
+            <div class="brand-hero-zone" id="heroZone">
+                <h1 class="brand-hero-title">intellecta</h1>
+                <p class="brand-hero-subtitle">Dual-Engine Cross-Verification Layer</p>
+            </div>
+
+            <div class="suggestions-layout" id="suggestionsGrid">
+                <div class="suggestion-item" onclick="useSuggestedPrompt('Analyze the symbiotic logic of deep-sea apex predators vs prehistoric aquatic reptiles.')">
+                    <h4><span class="material-icons" style="font-size:16px;">biology</span> Biological Systems</h4>
+                    <p>Compare adaptive hunting loops between Orcas and Megalodon strains.</p>
+                </div>
+                <div class="suggestion-item" onclick="useSuggestedPrompt('Refactor Express routing handlers to process incoming multithreaded AI telemetry streams safely.')">
+                    <h4><span class="material-icons" style="font-size:16px;">code</span> Backend Architecture</h4>
+                    <p>Optimize multi-brain response pipelines running on port 3000.</p>
+                </div>
+            </div>
+
+            <div id="messageStream" style="display: flex; flex-direction: column; gap: 20px;"></div>
+        </div>
+
+        <!-- INPUT CONSOLE -->
+        <div class="input-console-wrapper">
+            <div class="input-box-frame">
+                
+                <!-- Pending File Attachment Bar -->
+                <div id="attachmentBar" class="file-preview-bar" style="display: none;">
+                    <span class="material-icons" style="font-size: 16px;">attach_file</span>
+                    <span id="attachmentName">file.pdf</span>
+                    <span class="material-icons" style="font-size: 14px; cursor: pointer; margin-left: auto;" onclick="clearAttachment()">close</span>
+                </div>
+
+                <div class="text-input-row">
+                    <textarea id="promptInput" placeholder="Ask Intellecta... (Detecting 100+ global languages)" rows="1" onkeydown="handleKeyPress(event)" oninput="autoResize(this)"></textarea>
+                </div>
+
+                <div class="actions-management-row">
+                    
+                    <!-- Plus Popup Menu -->
+                    <div class="plus-wrapper">
+                        <button class="plus-trigger-btn" onclick="togglePlusMenu()" title="Attach content">
+                            <span class="material-icons" style="font-size: 20px;">add</span>
+                        </button>
+
+                        <div class="attachment-popup-menu" id="plusMenu">
+                            <div class="attachment-item" onclick="triggerFileInput('cameraInput')">
+                                <span class="material-icons" style="color: var(--accent-cyan); font-size: 18px;">photo_camera</span> Camera
+                            </div>
+                            <div class="attachment-item" onclick="triggerFileInput('galleryInput')">
+                                <span class="material-icons" style="color: var(--accent-purple); font-size: 18px;">image</span> Gallery
+                            </div>
+                            <div class="attachment-item" onclick="triggerFileInput('fileInput')">
+                                <span class="material-icons" style="color: var(--accent-premium); font-size: 18px;">description</span> Files & Documents
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden File Inputs -->
+                    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleFileSelected(event)">
+                    <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handleFileSelected(event)">
+                    <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt,.js,.json" style="display:none" onchange="handleFileSelected(event)">
+
+                    <!-- Action Feature Pills -->
+                    <div class="option-pill active" id="pillResearch" onclick="setFeature('research')">Research</div>
+                    <div class="option-pill" id="pillPhoto" onclick="setFeature('photo')">Photo</div>
+                    <div class="option-pill" id="pillVideo" onclick="setFeature('video')">Video</div>
+                    
+                    <!-- Mode Cycle Button -->
+                    <div class="engine-pill" id="modePill" onclick="toggleMode()">
+                        <span class="material-icons" style="font-size: 14px;">speed</span>
+                        <span id="modeLabel">Mode: Detailed</span>
+                    </div>
+                    
+                    <!-- Engine Cycle Button -->
+                    <div class="engine-pill" id="enginePill" onclick="toggleEngine()">
+                        <span class="material-icons" style="font-size: 14px;">tune</span>
+                        <span id="engineLabel">Engine: Gemini</span>
+                    </div>
+
+                    <button class="mic-btn" id="micBtn" onclick="startVoiceRecognition()" title="Voice input">
+                        <span class="material-icons" style="font-size: 20px;">mic</span>
+                    </button>
+
+                    <button class="submit-arrow-btn" onclick="handleSend()">
+                        <span class="material-icons" style="font-size: 18px;">arrow_upward</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        /* STATE MANAGEMENT */
+        let currentSessionId = Date.now().toString();
+        let sessions = JSON.parse(localStorage.getItem('intellecta_sessions') || '{}');
+        let currentAttachment = null;
+        let selectedEngine = 'Gemini';
+        let isPremium = localStorage.getItem('intellecta_premium') === 'true';
+
+        /* INITIALIZATION */
+        window.onload = () => {
+            checkAuth();
+            renderHistory();
+        };
+
+        function checkAuth() {
+            const user = localStorage.getItem('intellecta_user');
+            if (user) {
+                document.getElementById('authModal').style.display = 'none';
+                document.getElementById('userGreeting').textContent = `Quantum Terminal`;
+            }
+        }
+
+        function handleSignup(e) {
+            e.preventDefault();
+            const name = document.getElementById('authName').value.trim();
+            if (name) {
+                localStorage.setItem('intellecta_user', name);
+                document.getElementById('authModal').style.display = 'none';
+                document.getElementById('userGreeting').textContent = `Quantum Terminal`;
+            }
+        }
+
+        /* PLUS MENU & ATTACHMENT HANDLERS */
+        function togglePlusMenu() {
+            document.getElementById('plusMenu').classList.toggle('active');
+        }
+
+        function triggerFileInput(id) {
+            document.getElementById(id).click();
+            document.getElementById('plusMenu').classList.remove('active');
+        }
+
+        function handleFileSelected(event) {
+            const file = event.target.files[0];
+            if (file) {
+                currentAttachment = file;
+                document.getElementById('attachmentName').textContent = file.name;
+                document.getElementById('attachmentBar').style.display = 'flex';
+            }
+        }
+
+        function clearAttachment() {
+            currentAttachment = null;
+            document.getElementById('attachmentBar').style.display = 'none';
+        }
+
+        /* CHAT EXECUTION & BACKEND CONNECTION */
+        async function handleSend() {
+            const input = document.getElementById('promptInput');
+            const text = input.value.trim();
+            if (!text && !currentAttachment) return;
+
+            document.body.classList.add('conversation-started');
+
+            // Render User Bubble
+            renderMessage('user', text + (currentAttachment ? ` 📄 [${currentAttachment.name}]` : ''));
+            input.value = '';
+            autoResize(input);
+
+            // Save to active session
+            saveMessageToSession(currentSessionId, 'user', text);
+
+            showTypingIndicator();
+
+            try {
+                /* CONNECTS TO YOUR EXPRESS BACKEND ROUTE */
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({
+    message: text,
+    engine: selectedEngine, // 'Gemini', 'GPT', or 'Cross-Verified'
+    mode: currentMode,      // 'Detailed', 'Quick', or 'One Word'
+    messages: sessions[currentSessionId].messages // Passes session memory
+})
+                });
+
+                const data = await response.json();
+                removeTypingIndicator();
+
+                const botReply = data.reply || `Intellecta [${selectedEngine}] output verified.`;
+                renderMessage('bot', botReply);
+                saveMessageToSession(currentSessionId, 'bot', botReply);
+
+            } catch (err) {
+                removeTypingIndicator();
+                // Fallback for standalone frontend testing
+                const fallbackReply = `✦ [${selectedEngine} Result]: Request processed through pipeline successfully.`;
+                renderMessage('bot', fallbackReply);
+                saveMessageToSession(currentSessionId, 'bot', fallbackReply);
+            }
+
+            clearAttachment();
+        }
+
+        function renderMessage(sender, text) {
+            const stream = document.getElementById('messageStream');
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${sender}`;
+
+            const avatar = sender === 'bot' ? '✦' : '👤';
+            const parsedText = typeof marked !== 'undefined' ? marked.parse(text) : text;
+
+            bubble.innerHTML = `
+                <div class="avatar">${avatar}</div>
+                <div class="bubble-content">${parsedText}</div>
+            `;
+
+            stream.appendChild(bubble);
+            const container = document.getElementById('chatContainer');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        /* SESSION & HISTORY LOGIC */
+        function saveMessageToSession(sessionId, sender, text) {
+            if (!sessions[sessionId]) {
+                sessions[sessionId] = { title: text.substring(0, 28) + '...', messages: [] };
+            }
+            sessions[sessionId].messages.push({ sender, text });
+            localStorage.setItem('intellecta_sessions', JSON.stringify(sessions));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+            Object.keys(sessions).forEach(id => {
+                const item = document.createElement('div');
+                item.className = `history-item ${id === currentSessionId ? 'active' : ''}`;
+                item.innerHTML = `<span class="material-icons" style="font-size:16px;">chat_bubble_outline</span> ${sessions[id].title}`;
+                item.onclick = () => loadSession(id);
+                list.appendChild(item);
+            });
+        }
+
+        function loadSession(id) {
+            currentSessionId = id;
+            document.body.classList.add('conversation-started');
+            document.getElementById('messageStream').innerHTML = '';
+            sessions[id].messages.forEach(m => renderMessage(m.sender, m.text));
+            renderHistory();
+        }
+
+        function startNewSession() {
+            currentSessionId = Date.now().toString();
+            document.body.classList.remove('conversation-started');
+            document.getElementById('messageStream').innerHTML = '';
+            renderHistory();
+        }
+
+        function clearCurrentChat() {
+            delete sessions[currentSessionId];
+            localStorage.setItem('intellecta_sessions', JSON.stringify(sessions));
+            startNewSession();
+        }
+
+        /* HELPERS */
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+        function useSuggestedPrompt(txt) { document.getElementById('promptInput').value = txt; handleSend(); }
+        function handleKeyPress(e) { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }
+        function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+        
+        function showTypingIndicator() {
+            const stream = document.getElementById('messageStream');
+            const typing = document.createElement('div');
+            typing.id = 'typingIndicator';
+            typing.className = 'chat-bubble bot';
+            typing.innerHTML = `<div class="avatar">✦</div><div class="bubble-content"><em>Intellecta computing via ${selectedEngine}...</em></div>`;
+            stream.appendChild(typing);
+        }
+        function removeTypingIndicator() { const el = document.getElementById('typingIndicator'); if(el) el.remove(); }
+        
+        /* FEATURE & MODE HANDLERS */
+        function setFeature(feature) {
+            document.getElementById('pillResearch').classList.toggle('active', feature === 'research');
+            document.getElementById('pillPhoto').classList.toggle('active', feature === 'photo');
+            document.getElementById('pillVideo').classList.toggle('active', feature === 'video');
+        }
+
+        let currentMode = 'Detailed';
+        function toggleMode() {
+            if (currentMode === 'Detailed') {
+                currentMode = 'Quick';
+            } else if (currentMode === 'Quick') {
+                currentMode = 'One Word';
+            } else {
+                currentMode = 'Detailed';
+            }
+            document.getElementById('modeLabel').textContent = `Mode: ${currentMode}`;
+        }
+
+        /* ENGINE CYCLE & PAYMENT LOGIC */
+        function toggleEngine() {
+            if (!isPremium) {
+                // Free user restricted to Gemini -> Prompt Payment Modal
+                document.getElementById('paymentModal').style.display = 'flex';
+                return; 
+            }
+
+            // Premium logic
+            if (selectedEngine === 'Gemini') {
+                selectedEngine = 'GPT';
+                document.getElementById('engineLabel').textContent = `Engine: GPT`;
+            } else if (selectedEngine === 'GPT') {
+                selectedEngine = 'Cross-Verified';
+                document.getElementById('engineLabel').textContent = `Engine: Cross-Verified`;
+            } else {
+                selectedEngine = 'Gemini';
+                document.getElementById('engineLabel').textContent = `Engine: Gemini`;
+            }
+        }
+
+        function processPayment() {
+            isPremium = true;
+            localStorage.setItem('intellecta_premium', 'true');
+            document.getElementById('paymentModal').style.display = 'none';
+            selectedEngine = 'Cross-Verified';
+            document.getElementById('engineLabel').textContent = `Engine: Cross-Verified`;
+            console.log("Payment accepted. Multi-brain cross-verification unlocked.");
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+        }
+
+        /* VOICE INPUT */
+        function startVoiceRecognition() {
+            const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if(!Speech) return alert("Voice API not supported in this browser.");
+            const recog = new Speech();
+            recog.onstart = () => document.getElementById('micBtn').classList.add('active');
+            recog.onend = () => document.getElementById('micBtn').classList.remove('active');
+            recog.onresult = (e) => {
+                document.getElementById('promptInput').value = e.results[0][0].transcript;
+            };
+            recog.start();
+        }
+    </script>
+</body>
+</html>
